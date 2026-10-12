@@ -298,6 +298,16 @@ def _validate_optimizer_params(spec: StrategySpec) -> list[dict]:
                 errors.append(_optimizer_param_error("portfolio.params.pre_filter_signal must reference a signal rule"))
             elif _is_categorical_signal_rule(spec.signal.rules[pre_filter_signal]):
                 errors.append(_optimizer_param_error("portfolio.params.pre_filter_signal must reference a boolean signal rule"))
+    elif spec.portfolio.type == "EqualWeight":
+        # rank_by only orders new entries when max_holdings caps equal weights.
+        rank_by = params.get("rank_by")
+        if rank_by is not None:
+            if not spec.signal.rules:
+                errors.append(_optimizer_param_error("portfolio.params.rank_by requires signal rules"))
+            else:
+                errors.extend(_require_optimizer_column("portfolio.params.rank_by", rank_by, available_columns))
+        if not isinstance(params.get("rank_ascending", False), bool):
+            errors.append(_optimizer_param_error("portfolio.params.rank_ascending must be boolean"))
     elif spec.portfolio.type == "RiskParity":
         errors.extend(_require_optimizer_column("portfolio.params.volatility_col", params.get("volatility_col"), available_columns))
     elif spec.portfolio.type == "Kelly":
