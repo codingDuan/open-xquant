@@ -52,5 +52,6 @@ def test_formula_event_expr_column_check_matches_formula() -> None:
     codes = {e["check"] for e in validator.validate(spec).errors}
     formula_spec = _spec({"entry": {"type": "Formula", "params": {"expr": "missing_col < 0"}}})
     formula_codes = {e["check"] for e in validator.validate(formula_spec).errors}
-    assert codes == formula_codes
-    assert codes  # unknown column must be rejected
+    # FormulaEvent additionally requires an exit rule; the expression checks must match.
+    assert codes - {"event_signal_exit_missing"} == formula_codes
+    assert formula_codes  # unknown column must be rejected

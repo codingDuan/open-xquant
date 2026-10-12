@@ -13,3 +13,10 @@ def test_formula_event_is_builtin() -> None:
 
     _load_builtins()
     assert "FormulaEvent" in _SIGNAL_REGISTRY
+
+
+def test_formula_exit_rule_is_builtin() -> None:
+    from oxq.core.registry import _RULE_REGISTRY
+
+    _load_builtins()
+    assert "FormulaExitRule" in _RULE_REGISTRY

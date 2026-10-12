@@ -47,6 +47,7 @@ _COMPONENT_ALIASES: dict[str, dict[str, list[str]]] = {
         "RebalanceFrequencyRule": ["rebalance frequency", "调仓频率"],
         "CalendarRebalanceRule": ["calendar rebalance", "月初调仓", "周初调仓"],
         "MaxHoldingsRule": ["max holdings", "最大持仓数"],
+        "FormulaExitRule": ["formula exit", "条件离场", "死叉清仓"],
     },
 }
 
@@ -72,6 +73,7 @@ _COMPONENT_FORMULAS: dict[str, dict[str, str]] = {
         "RebalanceFrequencyRule": "Permit rebalancing only every interval_days trading sessions.",
         "CalendarRebalanceRule": "Permit rebalancing on the first observed bar of each configured calendar period.",
         "MaxHoldingsRule": "Limit the number of simultaneously held positions.",
+        "FormulaExitRule": "Exit a held position when a boolean expression over the bar row is True.",
     },
 }
 
@@ -100,6 +102,7 @@ _COMPONENT_CATEGORIES: dict[str, dict[str, str]] = {
         "BlacklistRule": "constraint",
         "DailyLossLimitRisk": "risk",
         "ExitRule": "exit",
+        "FormulaExitRule": "exit",
         "MaxDrawdownRisk": "risk",
         "MaxHoldingsRule": "constraint",
         "RebalanceFrequencyRule": "constraint",

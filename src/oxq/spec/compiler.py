@@ -438,6 +438,7 @@ _SUPPORTED_RUNTIME_RULES = frozenset(
         "MaxDrawdownRisk",
         "DailyLossLimitRisk",
         "MaxHoldingsRule",
+        "FormulaExitRule",
     }
 )
 

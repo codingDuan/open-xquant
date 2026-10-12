@@ -524,6 +524,7 @@ _SUPPORTED_RUNTIME_RULES = frozenset(
         "MaxDrawdownRisk",
         "DailyLossLimitRisk",
         "MaxHoldingsRule",
+        "FormulaExitRule",
     }
 )
 
@@ -534,7 +535,52 @@ _RULE_ALLOWED_PARAMS = {
     "MaxDrawdownRisk": {"max_drawdown"},
     "DailyLossLimitRisk": {"max_daily_loss"},
     "MaxHoldingsRule": {"max_holdings"},
+    "FormulaExitRule": {"expr"},
 }
+
+# Rules that can close a position opened by an event signal. Crossover specs are
+# exempt: the compiler appends their symmetric ExitRule automatically.
+_EXIT_CAPABLE_RULES = frozenset({"FormulaExitRule", "StopLossRule", "TakeProfitRule", "TrailingStopRule"})
+
+
+def _rule_expr_columns(spec: StrategySpec) -> set[str]:
+    """Columns a portfolio rule expression may reference: data, indicators and signals."""
+    return set(spec.data.required_columns) | set(spec.signal.indicators) | set(spec.signal.rules)
+
+
+def _validate_rule_expr(rule_name: str, expr: object, columns: set[str]) -> list[dict]:
+    field_name = f"portfolio.rules.{rule_name}.params.expr"
+    if not isinstance(expr, str) or not expr.strip():
+        return [_err("fatal", "portfolio_rule_expr_invalid", f"{field_name} must be a non-empty string", ["executable"])]
+    dummy = pd.DataFrame({column: [1.0] for column in sorted(columns)})
+    try:
+        dummy.eval(expr)
+    except Exception as exc:
+        return [
+            _err("fatal", "portfolio_rule_expr_invalid", f"{field_name} cannot be evaluated: {exc}", ["executable"])
+        ]
+    return []
+
+
+def _validate_event_signal_exit(spec: StrategySpec) -> list[dict]:
+    """Event signals hold positions until an exit rule closes them; require one."""
+    if spec.portfolio.type != "EqualWeight" or not spec.signal.rules:
+        return []
+    has_event = any(_effective_signal_type(spec, name) == "event" for name in spec.signal.rules)
+    has_crossover = any(rule.type == "Crossover" for rule in spec.signal.rules.values())
+    if not has_event or has_crossover:
+        return []
+    if any(rule.type in _EXIT_CAPABLE_RULES for rule in spec.portfolio.rules.values()):
+        return []
+    return [
+        _err(
+            "fatal",
+            "event_signal_exit_missing",
+            "event signals hold positions until an exit rule closes them; declare at least one of: "
+            + ", ".join(sorted(_EXIT_CAPABLE_RULES)),
+            ["executable"],
+        )
+    ]
 
 
 def _validate_runtime_rule(rule_name: str, rule_type: str, params: dict) -> list[dict]:
@@ -605,7 +651,12 @@ def _validate_portfolio_rules(spec: StrategySpec) -> list[dict]:
     errors: list[dict] = []
     for rule_name, rule_def in sorted(spec.portfolio.rules.items()):
         if rule_name != "rebalance":
-            errors.extend(_validate_runtime_rule(rule_name, rule_def.type, rule_def.params))
+            rule_errors = _validate_runtime_rule(rule_name, rule_def.type, rule_def.params)
+            errors.extend(rule_errors)
+            if rule_def.type == "FormulaExitRule" and not rule_errors:
+                errors.extend(
+                    _validate_rule_expr(rule_name, rule_def.params.get("expr"), _rule_expr_columns(spec))
+                )
             continue
         if rule_def.type != "RebalanceFrequencyRule":
             errors.append(
@@ -1449,6 +1500,7 @@ def validate(spec: StrategySpec) -> ValidationResult:
     errors.extend(_validate_derived_column_names(spec))
     errors.extend(_validate_signal_column_references(spec))
     errors.extend(_validate_categorical_signal_portfolio(spec))
+    errors.extend(_validate_event_signal_exit(spec))
     errors.extend(_validate_terminal_signal_rules(spec))
     errors.extend(_validate_composite_lifecycle_rules(spec))
     errors.extend(_validate_optimizer_params(spec))
