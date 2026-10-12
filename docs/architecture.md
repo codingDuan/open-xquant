@@ -445,7 +445,8 @@ oxq spec init "A-share momentum TopN" --market-preset cn_a_share
 - `portfolio.rules` 白名单：
   `RebalanceFrequencyRule`、`StopLossRule`、`TakeProfitRule`、
   `TrailingStopRule`、`MaxDrawdownRisk`、`DailyLossLimitRisk`、
-  `MaxHoldingsRule`
+  `MaxHoldingsRule`、`FormulaExitRule`、`EntryBarLowStopRule`、`TimeStopRule`
+- `portfolio.params.rank_by` / `rank_ascending`（`EqualWeight` + signal rules：`max_holdings` 截断时的新开仓优先级）
 - `portfolio.constraints.max_weight`
 - `portfolio.constraints.min_weight`
 - `portfolio.constraints.max_holdings`
@@ -708,8 +709,13 @@ N 日收益，再在同一交易日跨标的做百分位排名。普通单标的
 
 ### 11.4 信号生成器 (oxq.signals)
 
-8 种信号类型：Crossover, Threshold, Comparison, Formula, Peak, Timestamp, Composite, ROCTiming。
+9 种信号类型：Crossover, Threshold, Comparison, Formula, FormulaEvent, Peak, Timestamp, Composite, ROCTiming。
 其中 `ROCTiming` 是内置分类信号，输出 `BUY`、`SELL`、`HOLD`。
+
+生命周期分两类：`Crossover`、`FormulaEvent` 是**事件型**——触发的那根 K 线入场，之后一直持有到离场规则平仓；
+其余是**持续型**——每根 K 线重新判断，条件不成立即卖出。`Crossover` 会自动附带对称的 `ExitRule(fast<slow)`；
+`FormulaEvent` 不附带，必须在 `portfolio.rules` 中显式声明至少一条离场规则（validator 的 `event_signal_exit_missing`），
+适合「入场条件和离场条件不同」的策略，例如「J 值超卖时买入，趋势线跌破时卖出」。
 自定义分类信号用于 spec 时，应在 rule 顶层声明
 `output_domain: [BUY, SELL, HOLD]`。
 
@@ -745,6 +751,12 @@ Builder 必须把 recipe 的 placeholder 映射到用户确认值，不能用 ca
 | `TakeProfitRule` | Post-trade | 止盈 |
 | `TrailingStopRule` | Post-trade | 追踪止损 |
 | `ExitRule` | Post-trade | 条件退出 |
+| `FormulaExitRule` | Post-trade | 表达式为真时平仓（可引用 OHLCV、指标与信号列） |
+| `EntryBarLowStopRule` | Post-trade | 收盘价跌破入场 K 线最低价 ×(1−buffer) 时平仓 |
+| `TimeStopRule` | Post-trade | 持有满 `max_bars` 根后，收益 ≤ `min_return` 即平仓 |
+
+引擎每根 K 线会调用规则两次（组合优化前、交易后监控）。`EntryBarLowStopRule`、`TimeStopRule`
+是有状态规则，入场 K 线和持有天数按 K 线日期去重；某根 K 线上看到未持仓时清除状态。
 
 ### 11.7 交易执行 (oxq.trade)
 
