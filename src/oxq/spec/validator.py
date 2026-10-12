@@ -143,7 +143,7 @@ def _validate_signal_column_references(spec: StrategySpec) -> list[dict]:
                         )
                     )
             errors.extend(_validate_relationship(rule_name, params.get("relationship", "gt")))
-        elif rule_def.type == "Formula":
+        elif rule_def.type in {"Formula", "FormulaEvent"}:
             expr = params.get("expr")
             if not _is_non_empty_string(expr):
                 errors.append(_missing_signal_param(rule_name, "expr"))
@@ -235,6 +235,9 @@ def _validate_derived_column_names(spec: StrategySpec) -> list[dict]:
 
 
 _CATEGORICAL_SIGNAL_DOMAIN = {"BUY", "SELL", "HOLD"}
+# Mirrors compiler._EVENT_SIGNAL_TYPES (kept separate to avoid a module-level
+# compiler import; tests assert the two stay equal).
+_EVENT_SIGNAL_TYPES = frozenset({"Crossover", "FormulaEvent"})
 
 
 def _signal_output_domain(rule_def: object) -> set[str]:
@@ -411,7 +414,7 @@ def _validate_composite_lifecycle_rules(spec: StrategySpec) -> list[dict]:
 def _effective_signal_type(spec: StrategySpec, signal_name: str, seen: set[str] | None = None) -> str:
     rule_def = spec.signal.rules[signal_name]
     if rule_def.type != "Composite":
-        return "event" if rule_def.type == "Crossover" else "level"
+        return "event" if rule_def.type in _EVENT_SIGNAL_TYPES else "level"
     seen = set(seen or ())
     if signal_name in seen:
         return "level"

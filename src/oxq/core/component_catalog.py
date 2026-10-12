@@ -34,6 +34,7 @@ _COMPONENT_ALIASES: dict[str, dict[str, list[str]]] = {
         "Crossover": ["cross", "crossover", "金叉", "上穿"],
         "ROCTiming": ["roc timing", "roc reversal", "动量择时", "反转择时"],
         "Threshold": ["threshold", "阈值", "大于小于", "条件过滤"],
+        "FormulaEvent": ["formula event", "entry event", "入场事件", "买卖分离入场"],
     },
     "portfolios": {
         "TopNRanking": ["top n", "topn", "取TopN", "排名前N", "归一化权重", "按得分归一化"],
@@ -63,6 +64,7 @@ _COMPONENT_FORMULAS: dict[str, dict[str, str]] = {
         "Crossover": "fast.shift(1) <= slow.shift(1) and fast > slow",
         "Threshold": "column relationship threshold",
         "ROCTiming": "BUY below bottom threshold, SELL above top threshold, HOLD otherwise",
+        "FormulaEvent": "Boolean expression; a True bar opens a position that is held until an exit rule closes it.",
     },
     "rules": {
         "StopLossRule": "Exit when unrealized loss exceeds threshold.",
@@ -90,6 +92,7 @@ _COMPONENT_CATEGORIES: dict[str, dict[str, str]] = {
         "Comparison": "filter",
         "Composite": "composition",
         "Formula": "custom_expression",
+        "FormulaEvent": "custom_expression",
         "Peak": "pattern",
         "Timestamp": "calendar",
     },

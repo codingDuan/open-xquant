@@ -54,7 +54,9 @@ FILL_PRICE_MODE_MAP: dict[str, FillPriceMode] = {
 # NOTE: Peak is excluded because its implementation uses shift(-i)
 # which introduces future-data bias. Timestamp is excluded because
 # it is time-based and should re-evaluate every bar.
-_EVENT_SIGNAL_TYPES = frozenset({"Crossover"})
+# FormulaEvent is an event too, but unlike Crossover it implies no symmetric
+# ExitRule: its exit is declared explicitly in portfolio.rules.
+_EVENT_SIGNAL_TYPES = frozenset({"Crossover", "FormulaEvent"})
 
 
 def _resolve_indicator(name: str) -> type:
