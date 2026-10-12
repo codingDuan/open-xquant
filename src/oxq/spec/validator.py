@@ -525,6 +525,8 @@ _SUPPORTED_RUNTIME_RULES = frozenset(
         "DailyLossLimitRisk",
         "MaxHoldingsRule",
         "FormulaExitRule",
+        "EntryBarLowStopRule",
+        "TimeStopRule",
     }
 )
 
@@ -536,11 +538,22 @@ _RULE_ALLOWED_PARAMS = {
     "DailyLossLimitRisk": {"max_daily_loss"},
     "MaxHoldingsRule": {"max_holdings"},
     "FormulaExitRule": {"expr"},
+    "EntryBarLowStopRule": {"buffer"},
+    "TimeStopRule": {"max_bars", "min_return"},
 }
 
 # Rules that can close a position opened by an event signal. Crossover specs are
 # exempt: the compiler appends their symmetric ExitRule automatically.
-_EXIT_CAPABLE_RULES = frozenset({"FormulaExitRule", "StopLossRule", "TakeProfitRule", "TrailingStopRule"})
+_EXIT_CAPABLE_RULES = frozenset(
+    {
+        "FormulaExitRule",
+        "StopLossRule",
+        "TakeProfitRule",
+        "TrailingStopRule",
+        "EntryBarLowStopRule",
+        "TimeStopRule",
+    }
+)
 
 
 def _rule_expr_columns(spec: StrategySpec) -> set[str]:
@@ -628,6 +641,38 @@ def _validate_runtime_rule(rule_name: str, rule_type: str, params: dict) -> list
                     "fatal",
                     "portfolio_rule_param_invalid",
                     f"portfolio.rules.{rule_name}.params.max_holdings must be a positive integer",
+                    ["executable"],
+                )
+            )
+    elif rule_type == "EntryBarLowStopRule":
+        buffer = params.get("buffer", 0.0)
+        if not _is_finite_number(buffer) or not 0.0 <= float(buffer) < 1.0:
+            errors.append(
+                _err(
+                    "fatal",
+                    "portfolio_rule_param_invalid",
+                    f"portfolio.rules.{rule_name}.params.buffer must be in [0, 1)",
+                    ["executable"],
+                )
+            )
+    elif rule_type == "TimeStopRule":
+        max_bars = params.get("max_bars", 3)
+        min_return = params.get("min_return", 0.0)
+        if not _is_positive_int(max_bars):
+            errors.append(
+                _err(
+                    "fatal",
+                    "portfolio_rule_param_invalid",
+                    f"portfolio.rules.{rule_name}.params.max_bars must be a positive integer",
+                    ["executable"],
+                )
+            )
+        if not _is_finite_number(min_return) or float(min_return) <= -1.0:
+            errors.append(
+                _err(
+                    "fatal",
+                    "portfolio_rule_param_invalid",
+                    f"portfolio.rules.{rule_name}.params.min_return must be a finite number > -1",
                     ["executable"],
                 )
             )

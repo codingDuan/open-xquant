@@ -285,6 +285,7 @@ def _load_builtins() -> None:
         BlacklistRule,
         CalendarRebalanceRule,
         DailyLossLimitRisk,
+        EntryBarLowStopRule,
         ExitRule,
         FormulaExitRule,
         MaxDrawdownRisk,
@@ -292,6 +293,7 @@ def _load_builtins() -> None:
         RebalanceFrequencyRule,
         StopLossRule,
         TakeProfitRule,
+        TimeStopRule,
         TrailingStopRule,
     )
 
@@ -299,6 +301,7 @@ def _load_builtins() -> None:
         BlacklistRule,
         CalendarRebalanceRule,
         DailyLossLimitRisk,
+        EntryBarLowStopRule,
         ExitRule,
         FormulaExitRule,
         MaxDrawdownRisk,
@@ -306,6 +309,7 @@ def _load_builtins() -> None:
         RebalanceFrequencyRule,
         StopLossRule,
         TakeProfitRule,
+        TimeStopRule,
         TrailingStopRule,
     ):
         _register(cls, Rule, _RULE_REGISTRY)

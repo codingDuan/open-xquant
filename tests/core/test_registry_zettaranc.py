@@ -20,3 +20,10 @@ def test_formula_exit_rule_is_builtin() -> None:
 
     _load_builtins()
     assert "FormulaExitRule" in _RULE_REGISTRY
+
+
+def test_entry_stop_rules_are_builtin() -> None:
+    from oxq.core.registry import _RULE_REGISTRY
+
+    _load_builtins()
+    assert {"EntryBarLowStopRule", "TimeStopRule"} <= set(_RULE_REGISTRY)

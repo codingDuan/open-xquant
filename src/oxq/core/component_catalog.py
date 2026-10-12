@@ -48,6 +48,8 @@ _COMPONENT_ALIASES: dict[str, dict[str, list[str]]] = {
         "CalendarRebalanceRule": ["calendar rebalance", "月初调仓", "周初调仓"],
         "MaxHoldingsRule": ["max holdings", "最大持仓数"],
         "FormulaExitRule": ["formula exit", "条件离场", "死叉清仓"],
+        "EntryBarLowStopRule": ["entry bar low stop", "入场K线止损", "只输一根K线"],
+        "TimeStopRule": ["time stop", "时间止损", "N天不涨"],
     },
 }
 
@@ -74,6 +76,8 @@ _COMPONENT_FORMULAS: dict[str, dict[str, str]] = {
         "CalendarRebalanceRule": "Permit rebalancing on the first observed bar of each configured calendar period.",
         "MaxHoldingsRule": "Limit the number of simultaneously held positions.",
         "FormulaExitRule": "Exit a held position when a boolean expression over the bar row is True.",
+        "EntryBarLowStopRule": "Exit when close < entry-bar low * (1 - buffer).",
+        "TimeStopRule": "After max_bars held, exit when close / entry cost - 1 <= min_return.",
     },
 }
 
@@ -103,6 +107,8 @@ _COMPONENT_CATEGORIES: dict[str, dict[str, str]] = {
         "DailyLossLimitRisk": "risk",
         "ExitRule": "exit",
         "FormulaExitRule": "exit",
+        "EntryBarLowStopRule": "exit",
+        "TimeStopRule": "exit",
         "MaxDrawdownRisk": "risk",
         "MaxHoldingsRule": "constraint",
         "RebalanceFrequencyRule": "constraint",
